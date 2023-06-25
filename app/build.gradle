@@ -1,0 +1,76 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.example.mysmartplugdemo'
+    compileSdk 33
+
+    defaultConfig {
+        applicationId "com.example.mysmartplugdemo"
+        minSdk 21
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a"
+        }
+    }
+
+    packagingOptions {
+        pickFirst 'lib/*/libc++_shared.so' // An Android Archive (AAR) file contains an Android library. If the .so file exists in multiple AAR files, select the first AAR file.
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    buildToolsVersion '33.0.0'
+}
+
+apply plugin: 'kotlin-android'
+dependencies {
+
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.8.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+
+    implementation 'com.alibaba:fastjson:1.1.67.android'
+    implementation 'com.squareup.okhttp3:okhttp-urlconnection:3.14.9'
+
+    // The latest stable App SDK for Android.
+    implementation 'com.tuya.smart:tuyasmart:4.0.0'
+
+    //Control SDK dependencies
+    implementation 'com.tuya.smart:tuyasmart-centralcontrol:1.0.2'
+
+    //implementation 'com.tuya.smart:tuyasmart-home-sdk:3.25.0'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+
+    //para la API de la red eléctrica de españa
+    implementation 'com.android.volley:volley:1.1.1'
+
+    /*
+    implementation 'com.tuya.smart:tuyasmart:3.20.0'
+
+    //TODOS ESTOS LOS HE AÑADIDO
+    implementation 'com.tuya.smart:tuyasmart-home:3.20.0'
+    // https://mvnrepository.com/artifact/com.tuya.smart/tuya-config
+    implementation 'com.tuya.smart:tuya-config:6.0.4'
+    // https://mvnrepository.com/artifact/com.tuya.smart/tuya-config-api
+    implementation 'com.tuya.smart:tuya-config-api:1.0.3'
+*/
+
+}
