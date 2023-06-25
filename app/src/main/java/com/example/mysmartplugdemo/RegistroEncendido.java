@@ -14,7 +14,6 @@ public class RegistroEncendido extends AppCompatActivity {
     @Override
     protected void onCreate (Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
     }
 
     public void EncendidoRegistro(Date fecha, boolean encendido) {
@@ -23,10 +22,12 @@ public class RegistroEncendido extends AppCompatActivity {
     }
 
     public Date getFecha() {
+
         return fecha;
     }
 
     public boolean isEncendido() {
+
         return encendido;
     }
 }
