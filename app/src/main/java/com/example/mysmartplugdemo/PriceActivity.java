@@ -1,6 +1,8 @@
 package com.example.mysmartplugdemo;
 
 import android.os.Bundle;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,7 +22,7 @@ import org.json.JSONObject;
 import java.util.Iterator;
 
 public class PriceActivity extends AppCompatActivity {
-    private TextView tvPrice;
+    private TableLayout tvPriceTable;
 
     private RequestQueue queue;
 
@@ -42,7 +44,7 @@ public class PriceActivity extends AppCompatActivity {
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
-                try {
+                /*try {
                     Iterator<String> keys = response.keys();
                     StringBuilder priceBuilder = new StringBuilder();
                     //JSONObject data = response.getJSONObject("PCB");
@@ -65,7 +67,23 @@ public class PriceActivity extends AppCompatActivity {
                         }
                     });
 
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
 
+                 */
+                try {
+                    Iterator<String> keys = response.keys();
+
+                    while (keys.hasNext()){
+                        String key = keys.next();
+                        JSONObject hourData = response.getJSONObject(key);
+
+                        String hour = hourData.getString("hour");
+                        String price = hourData.getString("price");
+
+                        addRowToTable(hour, price);
+                    }
 
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -81,9 +99,26 @@ public class PriceActivity extends AppCompatActivity {
         queue.add(request);
     }
 
+    private void addRowToTable(String hour, String price) {
+        TableRow tableRow = new TableRow(this);
+        tableRow.setLayoutParams(new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT));
 
+        TextView tvHour = new TextView(this);
+        tvHour.setText(hour);
+        tvHour.setPadding(10, 10, 10, 10);
+        tvHour.setBackgroundResource(R.color.white);
+        tableRow.addView(tvHour);
+
+        TextView tvPrice = new TextView(this);
+        tvPrice.setText(price + " €/MWh");
+        tvPrice.setPadding(10, 10, 10, 10);
+        tvPrice.setBackgroundResource(R.color.white);
+        tableRow.addView(tvPrice);
+
+        tvPriceTable.addView(tableRow);
+    }
 
     private void initViews(){
-        tvPrice = findViewById(R.id.tvPrice);
+        tvPriceTable = findViewById(R.id.tvPriceTable);
     }
 }
