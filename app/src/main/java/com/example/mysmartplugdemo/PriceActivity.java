@@ -44,34 +44,6 @@ public class PriceActivity extends AppCompatActivity {
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
-                /*try {
-                    Iterator<String> keys = response.keys();
-                    StringBuilder priceBuilder = new StringBuilder();
-                    //JSONObject data = response.getJSONObject("PCB");
-                    //JSONArray keys = data.names();
-
-                    while (keys.hasNext()){
-                        String key = keys.next();
-                        JSONObject hourData = response.getJSONObject(key);
-
-                        String hour = hourData.getString("hour");
-                        String price = hourData.getString("price");
-
-                        priceBuilder.append("Hora: ").append(hour).append(", Precio: ").append(price).append(" €/MWh\n");
-                        //Toast.makeText(PriceActivity.this, "Hora: "+hour+", Precio: "+ price + " €/MWh", Toast.LENGTH_SHORT).show();
-                    }
-                    tvPrice.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            tvPrice.setText(priceBuilder.toString());
-                        }
-                    });
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-                 */
                 try {
                     Iterator<String> keys = response.keys();
 
@@ -80,9 +52,10 @@ public class PriceActivity extends AppCompatActivity {
                         JSONObject hourData = response.getJSONObject(key);
 
                         String hour = hourData.getString("hour");
-                        String price = hourData.getString("price");
+                        double price = hourData.getDouble("price");
+                        double pricekWh = price / 1000;
 
-                        addRowToTable(hour, price);
+                        addRowToTable(hour, pricekWh);
                     }
 
                 } catch (JSONException e) {
@@ -99,7 +72,7 @@ public class PriceActivity extends AppCompatActivity {
         queue.add(request);
     }
 
-    private void addRowToTable(String hour, String price) {
+    private void addRowToTable(String hour, double pricekWh) {
         TableRow tableRow = new TableRow(this);
         tableRow.setLayoutParams(new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT));
 
@@ -110,7 +83,8 @@ public class PriceActivity extends AppCompatActivity {
         tableRow.addView(tvHour);
 
         TextView tvPrice = new TextView(this);
-        tvPrice.setText(price + " €/MWh");
+        //tvPrice.setText(pricekWh + " €/kWh");
+        tvPrice.setText(String.format("%.5f", pricekWh) + " €/kWh");
         tvPrice.setPadding(10, 10, 10, 10);
         tvPrice.setBackgroundResource(R.color.white);
         tableRow.addView(tvPrice);

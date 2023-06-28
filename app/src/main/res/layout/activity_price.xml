@@ -43,7 +43,7 @@
                         android:id="@+id/tvPrice"
                         android:background="@color/yellow_0"
                         android:padding="10dp"
-                        android:text="Precio (€/MWh)"
+                        android:text="Precio (€/kWh)"
                         android:textStyle="bold" />
                 </TableRow>
             </TableLayout>
