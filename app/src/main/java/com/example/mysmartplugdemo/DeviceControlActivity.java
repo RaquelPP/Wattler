@@ -24,6 +24,9 @@ import com.tuya.smart.sdk.centralcontrol.api.ITuyaLightDevice;
 import com.tuya.smart.sdk.centralcontrol.api.constants.LightMode;
 import com.tuya.smart.sdk.centralcontrol.api.constants.LightScene;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +36,10 @@ public class DeviceControlActivity extends AppCompatActivity {
     private Switch swStatus;
     private Spinner spWorkMode, spScene;
     private Button btnHistorial;
+    private Date fechaEncendido, fechaApagado;
+    private long tiempoTranscurrido;
+    private List<Date> listaEncendidos;
+    private ArrayList listaTiempos;
 
     String devId, devName, prodId;
     String dpIds = "1";
@@ -53,6 +60,9 @@ public class DeviceControlActivity extends AppCompatActivity {
             tvDeviceName.setText(devName);
         }
 
+        //Inicializar la lista de encendidos:
+        listaEncendidos = new ArrayList<>();
+        listaTiempos = new ArrayList<>();
 
         //CONTROL DEL DISPOSITIVO
 
@@ -60,29 +70,19 @@ public class DeviceControlActivity extends AppCompatActivity {
 
         controlDevice.registerDeviceListener(new IDeviceListener() {
             @Override
-            public void onDpUpdate(String devId, Map<String, Object> dpStr) {
-
-            }
+            public void onDpUpdate(String devId, Map<String, Object> dpStr) {}
 
             @Override
-            public void onRemoved(String devId) {
-
-            }
+            public void onRemoved(String devId) {}
 
             @Override
-            public void onStatusChanged(String devId, boolean online) {
-
-            }
+            public void onStatusChanged(String devId, boolean online) {}
 
             @Override
-            public void onNetworkStatusChanged(String devId, boolean status) {
-
-            }
+            public void onNetworkStatusChanged(String devId, boolean status) {}
 
             @Override
-            public void onDevInfoUpdate(String devId) {
-
-            }
+            public void onDevInfoUpdate(String devId) {}
         });
 
         swStatus.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -96,8 +96,18 @@ public class DeviceControlActivity extends AppCompatActivity {
 
                     @Override
                     public void onSuccess() {
-                        Toast.makeText(DeviceControlActivity.this, "Plug Status Change Success.", Toast.LENGTH_LONG).show();
+                        //Toast.makeText(DeviceControlActivity.this, "Plug Status Change Success.", Toast.LENGTH_LONG).show();
+                        if(isChecked){
+                            Toast.makeText(DeviceControlActivity.this, "Se ha encendido.", Toast.LENGTH_LONG).show();
+                            fechaEncendido = new Date();
+                            listaEncendidos.add(fechaEncendido);//se agrega la fecha de encendido a la lista
 
+                        }else {
+                            Toast.makeText(DeviceControlActivity.this, "Se ha apagado.", Toast.LENGTH_LONG).show();
+                            fechaApagado = new Date();
+                            tiempoTranscurrido = fechaApagado.getTime() - fechaEncendido.getTime();
+                            listaTiempos.add(tiempoTranscurrido);
+                        }
                     }
                 });
             }
@@ -109,6 +119,8 @@ public class DeviceControlActivity extends AppCompatActivity {
                 Intent intent = new Intent(DeviceControlActivity.this, HistorialActivity.class);
                 intent.putExtra("devId", devId);
                 intent.putExtra("dpIds", dpIds);
+                intent.putExtra("listaTiempos", listaTiempos);
+                intent.putExtra("listaEncendidos", (Serializable) listaEncendidos);
                 startActivity(intent);
             }
         });
