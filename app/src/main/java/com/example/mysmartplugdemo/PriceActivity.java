@@ -92,6 +92,16 @@ public class PriceActivity extends AppCompatActivity {
         tvPriceTable.addView(tableRow);
     }
 
+    /*
+    private void showNotificationLowestPrice(String hour, double price){
+        //Identificador único para la notificación
+        int notificationID = 1;
+
+
+    }
+
+     */
+
     private void initViews(){
         tvPriceTable = findViewById(R.id.tvPriceTable);
     }
