@@ -34,7 +34,6 @@ public class DeviceControlActivity extends AppCompatActivity {
 
     private TextView tvDeviceName;
     private Switch swStatus;
-    private Spinner spWorkMode, spScene;
     private Button btnHistorial;
     private Date fechaEncendido, fechaApagado;
     private long tiempoTranscurrido;
@@ -129,8 +128,6 @@ public class DeviceControlActivity extends AppCompatActivity {
     private void initViews(){
         tvDeviceName = findViewById(R.id.tvDeviceControlName);
         swStatus = findViewById(R.id.swStatus);
-        spWorkMode = findViewById(R.id.spWorkMode);
-        spScene = findViewById(R.id.spScene);
         btnHistorial = findViewById(R.id.btnHistorial);
     }
 

@@ -71,6 +71,11 @@
                 android:text="Product Id: " />
         </RelativeLayout>
 
+        <TextView
+            android:id="@+id/tvDeviceList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp" />
 
     </androidx.cardview.widget.CardView>
 

@@ -41,20 +41,21 @@ public class HomeActivity extends AppCompatActivity {
 
     private CardView cvDevice;
     private Button btnSearch, btnPrice;
-    private TextView tvDeviceName, tvDeviceId, tvProductId;
+    private TextView tvDeviceName, tvDeviceId, tvProductId, tvDeviceList;
 
     String homeName = "MyHome";
     String[] rooms = {"Kitchen", "Bedroom", "Living room"};
     ArrayList<String> roomList;
 
     //CAMBIAR Y PONER LA DEL WIFI, ESTA NO SIRVE
-    private String ssid = "DIGIFIBRA-Kx7d";
-    private String password = "PYTdHXSDeu";
-    //private String ssid = "lowi66E0";
-    //private String password = "A4FXAY6QQLZGZB";
+    //private String ssid = "DIGIFIBRA-Kx7d";
+    //private String password = "PYTdHXSDeu";
+    private String ssid = "lowi66E0";
+    private String password = "A4FXAY6QQLZGZB";
 
     private HomeBean currentHomeBean;
     private DeviceBean currentDeviceBean;
+    private List<DeviceBean> deviceList = new ArrayList<>();
 
     ITuyaActivator tuyaActivator;
 
@@ -108,10 +109,31 @@ public class HomeActivity extends AppCompatActivity {
                 bundle.putString("DeviceId", currentDeviceBean.devId);
                 bundle.putString("DeviceName", currentDeviceBean.name);
                 bundle.putString("ProductId", currentDeviceBean.productId);
+                Toast.makeText(HomeActivity.this, "Nombre del dispositivo: "+ currentDeviceBean.name, Toast.LENGTH_LONG).show();
+
+                // Determinar el tipo de dispositivo
+                if (currentDeviceBean.name.contains("Enchufe")) {
+                    // Es un enchufe, lanzar la actividad para controlar el enchufe
+                    Intent intent = new Intent(HomeActivity.this, DeviceControlActivity.class);
+                    intent.putExtra("DeviceId", currentDeviceBean.devId);
+
+                    startActivity(intent);
+                } else if (currentDeviceBean.name.contains("Bombilla")||currentDeviceBean.name.contains("Bulb")) {
+                    // Es una bombilla, lanzar la actividad para controlar la bombilla
+                    Intent intent = new Intent(HomeActivity.this, BulbControlActivity.class);
+                    intent.putExtra("DeviceId", currentDeviceBean.devId);
+
+                    startActivity(intent);
+                } else {
+                    // No se reconoce el tipo de dispositivo, mostrar un mensaje de error o realizar alguna acción predeterminada
+                    Toast.makeText(HomeActivity.this, "Tipo de dispositivo no reconocido", Toast.LENGTH_SHORT).show();
+                }
+/*
                 Intent intent = new Intent(HomeActivity.this, DeviceControlActivity.class);
                 intent.putExtras(bundle);
                 //startActivity(new Intent(HomeActivity.this, DeviceControlActivity.class));
                 startActivity(intent);
+*/
             }
         });
 
@@ -167,6 +189,8 @@ public class HomeActivity extends AppCompatActivity {
                     @Override
                     public void onActiveSuccess(DeviceBean devResp) {
                         Toast.makeText(HomeActivity.this, "Device Detection Successful.", Toast.LENGTH_LONG).show();
+                        deviceList.add(devResp);
+                        showDeviceList();
                         currentDeviceBean = devResp;
                         cvDevice.setClickable(true);
                         cvDevice.setBackgroundColor(Color.WHITE);
@@ -215,6 +239,21 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Mostrar la lista de dispositivos encontrados en la interfaz de usuario
+     */
+    private void showDeviceList() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < deviceList.size(); i++) {
+            DeviceBean device = deviceList.get(i);
+            sb.append("Device ").append(i + 1).append(": ").append(device.name).append("\n");
+            sb.append("Device ID: ").append(device.devId).append("\n");
+            sb.append("Product ID: ").append(device.productId).append("\n\n");
+        }
+        tvDeviceList.setText(sb.toString());
+    }
+
+
     private void initViews(){
         cvDevice = findViewById(R.id.cvDevice);
         btnSearch = findViewById(R.id.btnSearch);
@@ -222,6 +261,7 @@ public class HomeActivity extends AppCompatActivity {
         tvDeviceName = findViewById(R.id.tvDeviceName);
         tvDeviceId = findViewById(R.id.tvDeviceId);
         tvProductId = findViewById(R.id.tvProductId);
+        tvDeviceList = findViewById(R.id.tvDeviceList);
     }
 
 }

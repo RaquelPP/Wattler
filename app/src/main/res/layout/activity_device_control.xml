@@ -42,7 +42,7 @@
         android:layout_height="59dp"
         android:layout_marginTop="39dp"
         android:elegantTextHeight="false"
-        android:text="Plug Status"
+        android:text="Device Status"
         android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -108,5 +108,19 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/spWorkMode" />
+
+    <SeekBar
+        android:id="@+id/sbBrightness"
+        style="@style/Widget.AppCompat.SeekBar.Discrete"
+        android:layout_width="316dp"
+        android:layout_height="24dp"
+        android:layout_marginTop="79dp"
+        android:max="10"
+        android:progress="3"
+        app:layout_constraintBottom_toTopOf="@+id/spScene"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/swStatus"
+        app:layout_constraintVertical_bias="0.0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
