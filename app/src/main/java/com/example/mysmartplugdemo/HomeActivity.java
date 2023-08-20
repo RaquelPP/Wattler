@@ -5,19 +5,16 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
-import com.alibaba.fastjson.JSON;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
 import com.tuya.smart.home.sdk.bean.HomeBean;
 import com.tuya.smart.home.sdk.builder.ActivatorBuilder;
@@ -29,33 +26,26 @@ import com.tuya.smart.sdk.bean.DeviceBean;
 import com.tuya.smart.sdk.enums.ActivatorEZStepCode;
 import com.tuya.smart.sdk.enums.ActivatorModelEnum;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class HomeActivity extends AppCompatActivity {
 
-    private CardView cvDevice;
     private Button btnSearch, btnPrice;
-    private TextView tvDeviceName, tvDeviceId, tvProductId, tvDeviceList;
+    private TextView tvDeviceName;
+    private ImageView deviceImageView;
+
+    private List<DeviceBean> deviceList = new ArrayList<>(); //lista de dispositivos encontrados
 
     String homeName = "MyHome";
     String[] rooms = {"Kitchen", "Bedroom", "Living room"};
     ArrayList<String> roomList;
 
-    //CAMBIAR Y PONER LA DEL WIFI, ESTA NO SIRVE
-    //private String ssid = "DIGIFIBRA-Kx7d";
-    //private String password = "PYTdHXSDeu";
     private String ssid = "lowi66E0";
     private String password = "A4FXAY6QQLZGZB";
 
     private HomeBean currentHomeBean;
-    private DeviceBean currentDeviceBean;
-    private List<DeviceBean> deviceList = new ArrayList<>();
 
     ITuyaActivator tuyaActivator;
 
@@ -63,31 +53,25 @@ public class HomeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-        //Detectar los dispositivos que están en la red
-
         initViews();
-
-        cvDevice.setClickable(false);
-        cvDevice.setBackgroundColor(Color.LTGRAY);
 
         roomList = new ArrayList<>();
         roomList.addAll(Arrays.asList(rooms));
-
         createHome(homeName, roomList);
 
         btnPrice.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(HomeActivity.this, PriceActivity.class);
-
                 startActivity(intent);
             }
         });
+
         btnSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                getRegistrationToken();
                 String currentText = btnSearch.getText().toString();
-
                 if(tuyaActivator == null){
                     Toast.makeText(HomeActivity.this, "Wi-Fi config in progress.", Toast.LENGTH_LONG).show();
                 }else{
@@ -101,47 +85,13 @@ public class HomeActivity extends AppCompatActivity {
                 }
             }
         });
-
-        cvDevice.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Bundle bundle = new Bundle();
-                bundle.putString("DeviceId", currentDeviceBean.devId);
-                bundle.putString("DeviceName", currentDeviceBean.name);
-                bundle.putString("ProductId", currentDeviceBean.productId);
-                Toast.makeText(HomeActivity.this, "Nombre del dispositivo: "+ currentDeviceBean.name, Toast.LENGTH_LONG).show();
-
-                // Determinar el tipo de dispositivo
-                if (currentDeviceBean.name.contains("Enchufe")) {
-                    // Es un enchufe, lanzar la actividad para controlar el enchufe
-                    Intent intent = new Intent(HomeActivity.this, DeviceControlActivity.class);
-                    intent.putExtra("DeviceId", currentDeviceBean.devId);
-
-                    startActivity(intent);
-                } else if (currentDeviceBean.name.contains("Bombilla")||currentDeviceBean.name.contains("Bulb")) {
-                    // Es una bombilla, lanzar la actividad para controlar la bombilla
-                    Intent intent = new Intent(HomeActivity.this, BulbControlActivity.class);
-                    intent.putExtra("DeviceId", currentDeviceBean.devId);
-
-                    startActivity(intent);
-                } else {
-                    // No se reconoce el tipo de dispositivo, mostrar un mensaje de error o realizar alguna acción predeterminada
-                    Toast.makeText(HomeActivity.this, "Tipo de dispositivo no reconocido", Toast.LENGTH_SHORT).show();
-                }
-/*
-                Intent intent = new Intent(HomeActivity.this, DeviceControlActivity.class);
-                intent.putExtras(bundle);
-                //startActivity(new Intent(HomeActivity.this, DeviceControlActivity.class));
-                startActivity(intent);
-*/
-            }
-        });
-
     }
 
     /**
      * Crea Home en la nube y una vez creado, la nube te devuelve todos los valores del Home que
      * se ha creado.
+     * @param homeName: nombre de la casa
+     * @param roomList: lista de habitaciones
      */
     private void createHome(String homeName, List<String> roomList){
         TuyaHomeSdk.getHomeManagerInstance().createHome(homeName, 0, 0, "", roomList, new ITuyaHomeResultCallback() {
@@ -162,7 +112,7 @@ public class HomeActivity extends AppCompatActivity {
 
     /**
      * Buscar dispositivos según un token de emparejamiento.
-     * @param @token
+     * @param token: token de emparejamiento
      */
     private void searchDevices(String token){
         //Inicializa parámetros de emparejamiento
@@ -171,7 +121,7 @@ public class HomeActivity extends AppCompatActivity {
                 .setPassword(password)
                 .setContext(this)
                 .setActivatorModel(ActivatorModelEnum.TY_EZ)
-                .setTimeOut(1000)
+                .setTimeOut(100)
                 .setToken(token)
                 .setListener(new ITuyaSmartActivatorListener() {
                     //Token = pairing token
@@ -188,18 +138,11 @@ public class HomeActivity extends AppCompatActivity {
 
                     @Override
                     public void onActiveSuccess(DeviceBean devResp) {
+                        // Multiple callbacks are required to pair multiple devices i
                         Toast.makeText(HomeActivity.this, "Device Detection Successful.", Toast.LENGTH_LONG).show();
-                        deviceList.add(devResp);
-                        showDeviceList();
-                        currentDeviceBean = devResp;
-                        cvDevice.setClickable(true);
-                        cvDevice.setBackgroundColor(Color.WHITE);
-                        tvDeviceId.setText("Device ID: " + currentDeviceBean.devId);
-                        tvDeviceName.setText("Device Name: " + currentDeviceBean.name);
-                        tvProductId.setText("Product ID: " + currentDeviceBean.productId);
+                        addDeviceView(devResp);
                         btnSearch.setText("Search Devices");
                         tuyaActivator.stop();
-
                     }
 
                     @Override
@@ -219,7 +162,7 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     /**
-     * Función para obtener el token de emparejamiento del dispositivo
+     * Función para obtener un token de emparejamiento
      */
     private void getRegistrationToken(){
 
@@ -229,39 +172,98 @@ public class HomeActivity extends AppCompatActivity {
             @Override
             public void onSuccess(String token) {
                 searchDevices(token);
-
             }
 
             @Override
-            public void onFailure(String errorCode, String errorMsg) {
-
-            }
+            public void onFailure(String errorCode, String errorMsg) {}
         });
     }
 
     /**
-     * Mostrar la lista de dispositivos encontrados en la interfaz de usuario
+     * Añade una nueva vista de dispositivo al contenedor
+     * @param device: dispositivo que se añade a la vista de dispositivos
      */
-    private void showDeviceList() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < deviceList.size(); i++) {
-            DeviceBean device = deviceList.get(i);
-            sb.append("Device ").append(i + 1).append(": ").append(device.name).append("\n");
-            sb.append("Device ID: ").append(device.devId).append("\n");
-            sb.append("Product ID: ").append(device.productId).append("\n\n");
-        }
-        tvDeviceList.setText(sb.toString());
+    private void addDeviceView(DeviceBean device) {
+        LinearLayout llDeviceContainer = findViewById(R.id.llDeviceContainer);
+
+        View deviceView = createDeviceView(device);
+        llDeviceContainer.addView(deviceView);
+        deviceView.setClickable(true);
     }
 
+    /**
+     * Crea una nueva vista de dispositivos, añade el dispositivo y establece el acceso al mismo
+     * @param device: dispositivo para el que se crea la vista
+     * @return : la vista del dispositivo
+     */
+    private View createDeviceView(DeviceBean device) {
+        View deviceView = getLayoutInflater().inflate(R.layout.dev_item_layout, null);
 
+        ImageView deviceImageView = deviceView.findViewById(R.id.deviceImageView);
+        TextView deviceNameText = deviceView.findViewById(R.id.tvDeviceName);
+
+        loadDeviceIcon(device, deviceImageView);
+        deviceNameText.setText(device.getName());
+
+        deviceView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                deviceType(device);
+            }
+        });
+        return deviceView;
+    }
+
+    /**
+     * Determina el tipo de dispositivo y comienza una actividad en función de este.
+     * @param device: dispositivo
+     */
+    private void deviceType(DeviceBean device){
+        Intent intent = new Intent();
+        String deviceName = device.getName().toLowerCase(); // Convertir a minúsculas para facilitar la comparación
+        if (deviceName.contains("enchufe")) {
+            // Es un enchufe, lanzar la actividad para controlar el enchufe
+            intent = new Intent(HomeActivity.this, DeviceControlActivity.class);
+        } else if (deviceName.contains("Bombilla") || deviceName.contains("Bulb")) {
+            // Es una bombilla, lanzar la actividad para controlar la bombilla
+            intent = new Intent(HomeActivity.this, BulbControlActivity.class);
+        } else {
+            // No se reconoce el tipo de dispositivo, mostrar un mensaje de error o realizar alguna acción predeterminada
+            Toast.makeText(HomeActivity.this, "Tipo de dispositivo no reconocido", Toast.LENGTH_SHORT).show();
+        }
+        intent.putExtra("DeviceId", device.getDevId());
+        intent.putExtra("DeviceName", device.getName());
+        startActivity(intent);
+    }
+
+    /**
+     * Carga una imagen según el tipo de dispositivo que sea
+     * @param device: dispositivo que se compara
+     * @param button: imagen del dispositivo a modo de botón
+     */
+    private void loadDeviceIcon(DeviceBean device, ImageView button) {
+        String deviceName = device.getName().toLowerCase(); // Convertir a minúsculas para facilitar la comparación
+
+        if (deviceName.contains("enchufe")) {
+            button.setImageResource(R.drawable.plug_icon);
+            button.setClickable(true);
+        } else if (deviceName.contains("bombilla") || deviceName.contains("bulb")) {
+            button.setImageResource(R.drawable.light_icon);
+            button.setClickable(true);
+        } else {
+            // Si no se reconoce el tipo de dispositivo, imagen predeterminada
+            button.setImageResource(R.drawable.rayo_);
+        }
+    }
+
+    /**
+     * Inicializa las vistas
+     */
     private void initViews(){
-        cvDevice = findViewById(R.id.cvDevice);
         btnSearch = findViewById(R.id.btnSearch);
         btnPrice = findViewById(R.id.btnPrice);
         tvDeviceName = findViewById(R.id.tvDeviceName);
-        tvDeviceId = findViewById(R.id.tvDeviceId);
-        tvProductId = findViewById(R.id.tvProductId);
-        tvDeviceList = findViewById(R.id.tvDeviceList);
+        deviceImageView = findViewById(R.id.deviceImageView);
     }
 
 }
