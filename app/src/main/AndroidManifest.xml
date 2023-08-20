@@ -28,13 +28,6 @@
             android:value="kyt5hyfgna33vaj3q7ky33yshfateypy" />
 
         <activity
-            android:name=".DeviceDBHelp"
-            android:exported="false">
-            <meta-data
-                android:name="android.app.lib_name"
-                android:value="" />
-        </activity>
-        <activity
             android:name=".PriceActivity"
             android:exported="false">
             <meta-data
