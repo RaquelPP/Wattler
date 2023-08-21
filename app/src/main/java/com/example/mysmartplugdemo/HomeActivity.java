@@ -1,11 +1,9 @@
 package com.example.mysmartplugdemo;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -13,7 +11,6 @@ import android.widget.Toast;
 
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
 
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
 import com.tuya.smart.home.sdk.bean.HomeBean;
@@ -197,7 +194,7 @@ public class HomeActivity extends AppCompatActivity {
      * @return : la vista del dispositivo
      */
     private View createDeviceView(DeviceBean device) {
-        View deviceView = getLayoutInflater().inflate(R.layout.dev_item_layout, null);
+        View deviceView = getLayoutInflater().inflate(R.layout.device_layout, null);
 
         ImageView deviceImageView = deviceView.findViewById(R.id.deviceImageView);
         TextView deviceNameText = deviceView.findViewById(R.id.tvDeviceName);
