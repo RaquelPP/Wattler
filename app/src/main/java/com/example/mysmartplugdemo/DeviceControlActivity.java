@@ -3,10 +3,9 @@ package com.example.mysmartplugdemo;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -14,15 +13,16 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.tuya.smart.centralcontrol.TuyaLightDevice;
+import com.tuya.smart.android.blemesh.api.IResultWithDataCallback;
+import com.tuya.smart.android.device.api.IPropertyCallback;
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
 import com.tuya.smart.sdk.api.IDeviceListener;
 import com.tuya.smart.sdk.api.IResultCallback;
 import com.tuya.smart.sdk.api.ITuyaDevice;
-import com.tuya.smart.sdk.bean.DeviceBean;
-import com.tuya.smart.sdk.centralcontrol.api.ITuyaLightDevice;
-import com.tuya.smart.sdk.centralcontrol.api.constants.LightMode;
-import com.tuya.smart.sdk.centralcontrol.api.constants.LightScene;
+import com.tuya.smart.sdk.enums.TYDevicePublishModeEnum;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -32,16 +32,24 @@ import java.util.Map;
 
 public class DeviceControlActivity extends AppCompatActivity {
 
-    private TextView tvDeviceName;
+    private TextView tvDeviceName, labelScene, labelWorkMode;
     private Switch swStatus;
     private Button btnHistorial;
+    private SeekBar sbBrightness;
+    private Spinner spScene, spWorkMode;
+
     private Date fechaEncendido, fechaApagado;
     private long tiempoTranscurrido;
     private List<Date> listaEncendidos;
     private ArrayList listaTiempos;
 
+    private List<Double> powerList;
+    private List<String> dpList;
+    private double current_power;
+
     String devId, devName, prodId;
     String dpIds = "1";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,9 +67,19 @@ public class DeviceControlActivity extends AppCompatActivity {
             tvDeviceName.setText(devName);
         }
 
-        //Inicializar la lista de encendidos:
+        //Inicializar las listas:
         listaEncendidos = new ArrayList<>();
         listaTiempos = new ArrayList<>();
+        powerList = new ArrayList<>();
+        dpList = new ArrayList<>();
+        dpList.add("19");
+
+
+        sbBrightness.setVisibility(View.INVISIBLE);
+        spWorkMode.setVisibility(View.INVISIBLE);
+        spScene.setVisibility(View.INVISIBLE);
+        labelWorkMode.setVisibility(View.INVISIBLE);
+        labelScene.setVisibility(View.INVISIBLE);
 
         //CONTROL DEL DISPOSITIVO
 
@@ -69,8 +87,23 @@ public class DeviceControlActivity extends AppCompatActivity {
 
         controlDevice.registerDeviceListener(new IDeviceListener() {
             @Override
-            public void onDpUpdate(String devId, Map<String, Object> dpStr) {}
+            public void onDpUpdate(String devId, Map<String, Object> dpStr) {
+                try {
+                    JSONObject dpJson = new JSONObject(dpStr);
 
+                    if (dpJson.has("cur_power")) {
+                        double curPowerValue = dpJson.getDouble("cur_power");
+
+                        if (curPowerValue != 0) {
+                            current_power = curPowerValue;
+                            //Toast.makeText(DeviceControlActivity.this, "curPowerValue es: " + curPowerValue + "w", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+// D/Tuya: AbsTuyaDevice onDpUpdate dpCodes: {cur_voltage=2182, cur_power=0, relay_status=last, switch_1=false, cur_current=0, add_ele=0, countdown_1=0}
             @Override
             public void onRemoved(String devId) {}
 
@@ -100,16 +133,43 @@ public class DeviceControlActivity extends AppCompatActivity {
                             Toast.makeText(DeviceControlActivity.this, "Se ha encendido.", Toast.LENGTH_LONG).show();
                             fechaEncendido = new Date();
                             listaEncendidos.add(fechaEncendido);//se agrega la fecha de encendido a la lista
+                            controlDevice.getDp("19", new IResultCallback() {
+                                @Override
+                                public void onError(String code, String error) {}
+
+                                @Override
+                                public void onSuccess() {
+                                    //Toast.makeText(DeviceControlActivity.this, "Se ha obtenido getDp 19 en el encendido.", Toast.LENGTH_LONG).show();
+                                }
+                            });
 
                         }else {
                             Toast.makeText(DeviceControlActivity.this, "Se ha apagado.", Toast.LENGTH_LONG).show();
                             fechaApagado = new Date();
                             tiempoTranscurrido = fechaApagado.getTime() - fechaEncendido.getTime();
                             listaTiempos.add(tiempoTranscurrido);
+
+                            controlDevice.getDp("19", new IResultCallback() {
+                                @Override
+                                public void onError(String code, String error) {}
+
+                                @Override
+                                public void onSuccess() {
+                                    //Toast.makeText(DeviceControlActivity.this, "Se ha obtenido getDp 19 en el apagado.", Toast.LENGTH_LONG).show();
+                                }
+                            });
+
+                            if (current_power != 0) {
+                                double consumoEstimado = (current_power/1000) * (tiempoTranscurrido / 3600000.0); // Convertir de w a kw y de ms a horas
+                                Toast.makeText(DeviceControlActivity.this, "consumo estimado es: " + consumoEstimado, Toast.LENGTH_LONG).show();
+
+                                powerList.add(consumoEstimado);
+                            }
                         }
                     }
                 });
             }
+
         });
 
         btnHistorial.setOnClickListener(new View.OnClickListener() {
@@ -120,6 +180,7 @@ public class DeviceControlActivity extends AppCompatActivity {
                 intent.putExtra("dpIds", dpIds);
                 intent.putExtra("listaTiempos", listaTiempos);
                 intent.putExtra("listaEncendidos", (Serializable) listaEncendidos);
+                intent.putExtra("powerList", (Serializable) powerList);
                 startActivity(intent);
             }
         });
@@ -129,6 +190,11 @@ public class DeviceControlActivity extends AppCompatActivity {
         tvDeviceName = findViewById(R.id.tvDeviceControlName);
         swStatus = findViewById(R.id.swStatus);
         btnHistorial = findViewById(R.id.btnHistorial);
+        sbBrightness = findViewById(R.id.sbBrightness);
+        spScene = findViewById(R.id.spScene);
+        spWorkMode = findViewById(R.id.spWorkMode);
+        labelScene = findViewById(R.id.labelScene);
+        labelWorkMode = findViewById(R.id.labelWorkMode);
     }
 
 }

@@ -25,8 +25,8 @@ import java.util.logging.LogRecord;
 
 public class HistorialActivity extends AppCompatActivity {
     private TextView tvDeviceHistory;
-    //private static final long DURACION_MAXIMA = 7 * 24 * 60 * 60 * 1000; // 1 semana en milisegundos
-    private static final long DURACION_MAXIMA = 60 * 1000; // 1 min en ms
+    private static final long DURACION_MAXIMA = 7 * 24 * 60 * 60 * 1000; // 1 semana en milisegundos
+    //private static final long DURACION_MAXIMA = 60 * 1000; // 1 min en ms
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,11 +38,16 @@ public class HistorialActivity extends AppCompatActivity {
         ArrayList listaTiempos = getIntent().getIntegerArrayListExtra("listaTiempos");
         List<Date> listaEncendidos = (List<Date>) getIntent().getSerializableExtra("listaEncendidos");
 
-        mostrarHistorial(listaTiempos, listaEncendidos);
+        List<Double> powerList = (List<Double>) getIntent().getSerializableExtra("powerList");
+        //double powerConsumedValue = getIntent().getDoubleExtra("powerConsumedValue", 0);
+
+        // Verificar si las listas no son nulas antes de usarlas
+        mostrarHistorial(listaTiempos, listaEncendidos, powerList);
+
     }
 
-    private void mostrarHistorial(ArrayList<Long> listaTiempos, List<Date> listaEncendidos) {
-        if (listaEncendidos != null && !listaEncendidos.isEmpty()) {
+    private void mostrarHistorial(ArrayList<Long> listaTiempos, List<Date> listaEncendidos, List<Double> powerList) {
+        if (listaEncendidos != null && !listaEncendidos.isEmpty() && powerList != null) {
             StringBuilder sb = new StringBuilder();
 
             Calendar calendar = Calendar.getInstance();
@@ -68,6 +73,14 @@ public class HistorialActivity extends AppCompatActivity {
 
                     sb.append("Encendido ").append(registrosMostrados + 1).append(": ").append(encendido).append("\n");
                     sb.append("Duración: ").append(horas).append(" horas, ").append(minutos).append(" minutos, ").append(segundos).append(" segundos, ").append(ms).append(" milisegundos").append("\n\n");
+
+                    // Obtener el valor de consumo de powerList para el encendido actual
+                    if (i < powerList.size()) {
+                        double powerValue = powerList.get(i);
+                        sb.append("Consumo de Potencia estimado: ").append(powerValue).append(" kWh\n\n");
+                    } else {
+                        sb.append("Consumo de Potencia: Desconocido\n\n");
+                    }
 
                     registrosMostrados++;
                 }
