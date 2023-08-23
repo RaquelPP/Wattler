@@ -28,21 +28,27 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Actividad para el control de un dispositivo inteligente de luz
+ */
 public class BulbControlActivity extends AppCompatActivity {
 
     private TextView tvDeviceName;
     private Switch swStatus;
-    private Spinner spWorkMode, spScene;
-    private SeekBar sbBrightness;
-
     private Button btnHistorial;
     private Date fechaEncendido, fechaApagado;
     private long tiempoTranscurrido;
     private List<Date> listaEncendidos;
     private ArrayList listaTiempos;
+    private Spinner spWorkMode, spScene;
+    private SeekBar sbBrightness;
 
     String devId, devName, prodId;
 
+    /**
+     * Llamado cuando la actividad se crea por primera vez
+     * @param savedInstanceState: datos guardados de la actividad
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,10 +58,9 @@ public class BulbControlActivity extends AppCompatActivity {
 
         initViews();
 
-        String[] scenes = new String[]{"Goodnight", "Casual", "Work", "Read"};//light mode
+        String[] scenes = new String[]{"Goodnight", "Casual", "Work", "Read"};//modos de luz
         String [] workModes = new String[]{"Scene", "White", "Color"};
 
-        //????
         ArrayAdapter<String> sceneAdapter = new ArrayAdapter<>(this, com.tuya.sdk.log.R.layout.support_simple_spinner_dropdown_item, scenes);
         ArrayAdapter<String> workModeAdapter = new ArrayAdapter<>(this, com.tuya.sdk.log.R.layout.support_simple_spinner_dropdown_item, workModes);
         spScene.setAdapter(sceneAdapter);
@@ -73,7 +78,6 @@ public class BulbControlActivity extends AppCompatActivity {
         listaTiempos = new ArrayList<>();
 
         //CONTROL DEL DISPOSITIVO
-
         ITuyaLightDevice controlDevice = new TuyaLightDevice(devId);
 
         controlDevice.registerDeviceListener(new IDeviceListener() {
@@ -83,24 +87,16 @@ public class BulbControlActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onRemoved(String devId) {
-
-            }
+            public void onRemoved(String devId) {}
 
             @Override
-            public void onStatusChanged(String devId, boolean online) {
-
-            }
+            public void onStatusChanged(String devId, boolean online) {}
 
             @Override
-            public void onNetworkStatusChanged(String devId, boolean status) {
-
-            }
+            public void onNetworkStatusChanged(String devId, boolean status) {}
 
             @Override
-            public void onDevInfoUpdate(String devId) {
-
-            }
+            public void onDevInfoUpdate(String devId) {}
         });
 
 
@@ -140,8 +136,8 @@ public class BulbControlActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-        //Aquí pondríamos el ajuste del brillo también
 
+        //Ajuste del brillo también
         sbBrightness.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -170,7 +166,6 @@ public class BulbControlActivity extends AppCompatActivity {
         });
 
         //Elegir el modo de luz
-
         spWorkMode.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -249,12 +244,16 @@ public class BulbControlActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Inicializa las vistas de la interzaf de usuario.
+     */
     private void initViews(){
         tvDeviceName = findViewById(R.id.tvDeviceControlName);
         swStatus = findViewById(R.id.swStatus);
         spWorkMode = findViewById(R.id.spWorkMode);
         spScene = findViewById(R.id.spScene);
         sbBrightness = findViewById(R.id.sbBrightness);
+        btnHistorial = findViewById(R.id.btnHistorial);
     }
 
 }
