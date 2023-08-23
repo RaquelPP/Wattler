@@ -2,6 +2,7 @@ package com.example.mysmartplugdemo;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -13,21 +14,26 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.tuya.smart.android.blemesh.api.IResultWithDataCallback;
-import com.tuya.smart.android.device.api.IPropertyCallback;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
 import com.tuya.smart.sdk.api.IDeviceListener;
 import com.tuya.smart.sdk.api.IResultCallback;
 import com.tuya.smart.sdk.api.ITuyaDevice;
-import com.tuya.smart.sdk.enums.TYDevicePublishModeEnum;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class DeviceControlActivity extends AppCompatActivity {
@@ -44,8 +50,10 @@ public class DeviceControlActivity extends AppCompatActivity {
     private ArrayList listaTiempos;
 
     private List<Double> powerList;
-    private List<String> dpList;
     private double current_power;
+    private List<Double> costList;
+
+    RequestQueue queue;
 
     String devId, devName, prodId;
     String dpIds = "1";
@@ -71,9 +79,9 @@ public class DeviceControlActivity extends AppCompatActivity {
         listaEncendidos = new ArrayList<>();
         listaTiempos = new ArrayList<>();
         powerList = new ArrayList<>();
-        dpList = new ArrayList<>();
-        dpList.add("19");
+        costList = new ArrayList<>();
 
+        queue = Volley.newRequestQueue(this);
 
         sbBrightness.setVisibility(View.INVISIBLE);
         spWorkMode.setVisibility(View.INVISIBLE);
@@ -133,6 +141,7 @@ public class DeviceControlActivity extends AppCompatActivity {
                             Toast.makeText(DeviceControlActivity.this, "Se ha encendido.", Toast.LENGTH_LONG).show();
                             fechaEncendido = new Date();
                             listaEncendidos.add(fechaEncendido);//se agrega la fecha de encendido a la lista
+
                             controlDevice.getDp("19", new IResultCallback() {
                                 @Override
                                 public void onError(String code, String error) {}
@@ -142,6 +151,8 @@ public class DeviceControlActivity extends AppCompatActivity {
                                     //Toast.makeText(DeviceControlActivity.this, "Se ha obtenido getDp 19 en el encendido.", Toast.LENGTH_LONG).show();
                                 }
                             });
+
+                            obtenerPrecioLuzEncendido();
 
                         }else {
                             Toast.makeText(DeviceControlActivity.this, "Se ha apagado.", Toast.LENGTH_LONG).show();
@@ -161,7 +172,7 @@ public class DeviceControlActivity extends AppCompatActivity {
 
                             if (current_power != 0) {
                                 double consumoEstimado = (current_power/1000) * (tiempoTranscurrido / 3600000.0); // Convertir de w a kw y de ms a horas
-                                Toast.makeText(DeviceControlActivity.this, "consumo estimado es: " + consumoEstimado, Toast.LENGTH_LONG).show();
+                                //Toast.makeText(DeviceControlActivity.this, "consumo estimado es: " + consumoEstimado, Toast.LENGTH_LONG).show();
 
                                 powerList.add(consumoEstimado);
                             }
@@ -181,9 +192,40 @@ public class DeviceControlActivity extends AppCompatActivity {
                 intent.putExtra("listaTiempos", listaTiempos);
                 intent.putExtra("listaEncendidos", (Serializable) listaEncendidos);
                 intent.putExtra("powerList", (Serializable) powerList);
+                intent.putExtra("costList", (Serializable) costList);
                 startActivity(intent);
             }
         });
+    }
+
+    private void obtenerPrecioLuzEncendido() {
+
+        String url = "https://api.preciodelaluz.org/v1/prices/now?zone=PCB";
+
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                try {
+                    // La respuesta contiene una sola entrada de precio, no necesitamos iterar por las claves
+                    double price = response.getDouble("price");
+                    double pricekWh = price / 1000;
+
+                    //Toast.makeText(DeviceControlActivity.this, "Precio a esta hora kwh: " + pricekWh, Toast.LENGTH_SHORT).show();
+                    //Log.d("Precios", "Precio: " + pricekWh);
+                    costList.add(pricekWh);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                //Toast.makeText(DeviceControlActivity.this, "Error al obtener el precio de la luz", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        queue.add(request);
     }
 
     private void initViews(){
