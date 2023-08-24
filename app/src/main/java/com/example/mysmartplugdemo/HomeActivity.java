@@ -39,9 +39,9 @@ public class HomeActivity extends AppCompatActivity {
     String[] rooms = {"Kitchen", "Bedroom", "Living room"};
     ArrayList<String> roomList;
 
-    //Cmabiar y poner
-    private String ssid = "nombre";
-    private String password = "1234567890ABCD";
+    //Cambiar y poner la de casa
+    private String ssid = "minombre";
+    private String password = "micontrasenia";
 
     private HomeBean currentHomeBean;
 
